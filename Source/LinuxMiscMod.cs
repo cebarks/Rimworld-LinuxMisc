@@ -45,6 +45,20 @@ namespace RimWorldLinuxMisc
             }
 
             listingStandard.Gap();
+            listingStandard.Gap();
+            listingStandard.Label("Gamemode Configuration");
+            listingStandard.GapLine();
+
+            listingStandard.CheckboxLabeled(
+                "Enable gamemode integration",
+                ref settings.enableGamemode,
+                "Activate gamemode performance optimizations when available"
+            );
+
+            listingStandard.Gap();
+            listingStandard.Label("Note: Requires gamemode to be installed on your system.");
+
+            listingStandard.Gap();
             listingStandard.GapLine();
             listingStandard.Label("Note: Changes take effect after restarting the game.");
 
@@ -52,6 +66,7 @@ namespace RimWorldLinuxMisc
             {
                 settings.enablePeriodicMadvise = true;
                 settings.periodicMadviseInterval = 30000;
+                settings.enableGamemode = true;
             }
 
             listingStandard.End();
