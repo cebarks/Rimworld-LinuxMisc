@@ -118,8 +118,8 @@ namespace RimWorldLinuxMisc.NativeInterop
                         return false;
                     }
 
-                    // release field is at offset 65 (after sysname)
-                    string release = Marshal.PtrToStringAnsi(buf + 65);
+                    // release field is at offset 130 (after sysname and nodename)
+                    string release = Marshal.PtrToStringAnsi(buf + 130);
                     if (string.IsNullOrEmpty(release))
                         return false;
 
