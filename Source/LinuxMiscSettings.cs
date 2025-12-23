@@ -6,12 +6,14 @@ namespace RimWorldLinuxMisc
     {
         public bool enablePeriodicMadvise = true;
         public int periodicMadviseInterval = 30000;
+        public bool verbosePeriodicLogging = true;
         public bool enableGamemode = true;
 
         public override void ExposeData()
         {
             Scribe_Values.Look(ref enablePeriodicMadvise, "enablePeriodicMadvise", true);
             Scribe_Values.Look(ref periodicMadviseInterval, "periodicMadviseInterval", 30000);
+            Scribe_Values.Look(ref verbosePeriodicLogging, "verbosePeriodicLogging", true);
             Scribe_Values.Look(ref enableGamemode, "enableGamemode", true);
             base.ExposeData();
         }

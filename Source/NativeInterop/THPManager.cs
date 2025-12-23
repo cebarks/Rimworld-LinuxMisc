@@ -121,7 +121,7 @@ namespace RimWorldLinuxMisc.NativeInterop
             }
         }
 
-        private static bool TryEnableViaMadvise()
+        private static bool TryEnableViaMadvise(bool isPeriodicExecution = false)
         {
             try
             {
@@ -172,7 +172,11 @@ namespace RimWorldLinuxMisc.NativeInterop
 
                 if (successCount > 0)
                 {
-                    Log.Message($"[LinuxMisc] Applied madvise(MADV_HUGEPAGE) to {successCount}/{totalRegions} memory regions");
+                    // Only log if not periodic execution, or if verbose logging is enabled
+                    if (!isPeriodicExecution || LinuxMiscMod.GetSettings().verbosePeriodicLogging)
+                    {
+                        Log.Message($"[LinuxMisc] Applied madvise(MADV_HUGEPAGE) to {successCount}/{totalRegions} memory regions");
+                    }
                     return true;
                 }
 
@@ -245,8 +249,11 @@ namespace RimWorldLinuxMisc.NativeInterop
                 {
                     try
                     {
-                        Log.Message("[LinuxMisc] Applying madvise to memory regions (periodic execution)");
-                        TryEnableViaMadvise();
+                        if (LinuxMiscMod.GetSettings().verbosePeriodicLogging)
+                        {
+                            Log.Message("[LinuxMisc] Applying madvise to memory regions (periodic execution)");
+                        }
+                        TryEnableViaMadvise(isPeriodicExecution: true);
                     }
                     catch (Exception ex)
                     {

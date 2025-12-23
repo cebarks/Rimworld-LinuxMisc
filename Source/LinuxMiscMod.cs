@@ -42,6 +42,13 @@ namespace RimWorldLinuxMisc
                 listingStandard.Label($"Interval: {intervalSeconds} seconds ({settings.periodicMadviseInterval}ms)");
                 intervalSeconds = (int)listingStandard.Slider(intervalSeconds, 0, 300);
                 settings.periodicMadviseInterval = intervalSeconds * 1000;
+
+                listingStandard.Gap();
+                listingStandard.CheckboxLabeled(
+                    "Verbose periodic THP logging",
+                    ref settings.verbosePeriodicLogging,
+                    "Show log messages each time periodic madvise runs (disable to reduce log spam)"
+                );
             }
 
             listingStandard.Gap();
@@ -66,6 +73,7 @@ namespace RimWorldLinuxMisc
             {
                 settings.enablePeriodicMadvise = true;
                 settings.periodicMadviseInterval = 30000;
+                settings.verbosePeriodicLogging = true;
                 settings.enableGamemode = true;
             }
 
