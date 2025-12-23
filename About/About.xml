@@ -3,30 +3,19 @@
     <name>Linux Performance Optimizations</name>
     <author>Anten Skrabec</author>
     <packageId>cebarks.rimworld.linuxmisc</packageId>
-    <description>Linux-specific performance optimizations for RimWorld.
+    <description>Performance optimizations for RimWorld on Linux.
 
-This mod enables Transparent Huge Pages (THP) for the RimWorld process, which can improve memory performance on Linux systems. THP allows the kernel to use larger memory pages (2MB instead of 4KB), reducing TLB misses and improving cache efficiency.
+Features:
+• Transparent Huge Pages (THP) for improved memory performance
+• GameMode integration for CPU governor optimizations
 
-The mod automatically detects your system configuration and enables THP if supported. If your kernel doesn't support THP or it's disabled, the mod will log a warning but won't affect gameplay.
+Both features are enabled automatically on startup and can be configured in mod settings. Gracefully does nothing on Windows/macOS.
 
-Requires: Linux with CONFIG_TRANSPARENT_HUGEPAGE enabled (standard on modern distributions)
-Platform: Linux only (gracefully skips on Windows/macOS)
-
-To verify THP is working:
-  cat /proc/$(pgrep RimWorldLinux)/smaps | grep AnonHugePages
-
-Source code: https://github.com/cebarks/rimworld-linux-misc</description>
+Source: https://github.com/cebarks/rimworld-linux-misc</description>
     <supportedVersions>
         <li>1.6</li>
     </supportedVersions>
-    <modDependencies>
-        <!-- No dependencies -->
-    </modDependencies>
     <loadAfter>
         <li>Ludeon.RimWorld</li>
-        <li>Ludeon.RimWorld.Royalty</li>
-        <li>Ludeon.RimWorld.Ideology</li>
-        <li>Ludeon.RimWorld.Biotech</li>
-        <li>Ludeon.RimWorld.Anomaly</li>
     </loadAfter>
 </ModMetaData>
