@@ -56,8 +56,9 @@ release: build
     cp README.md "${MOD_DIR}/"
 
     # Copy Source/ excluding build artifacts
-    rsync -a --exclude='bin/' --exclude='obj/' --exclude='*.user' --exclude='*.suo' \
-        Source/ "${MOD_DIR}/Source/"
+    cp -r Source/ "${MOD_DIR}/Source/"
+    rm -rf "${MOD_DIR}/Source/bin" "${MOD_DIR}/Source/obj"
+    find "${MOD_DIR}/Source/" -type f \( -name '*.user' -o -name '*.suo' \) -delete
 
     # Create zip (remove old one if exists)
     rm -f "${ZIP_NAME}"
