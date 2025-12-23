@@ -47,19 +47,21 @@ Access settings via RimWorld's **Options → Mod Settings → Linux Misc**:
 
 ## Building from Source
 
-#### Requires .NET SDK and RimWorld installed at the default Steam location.
+### Requirements
+- .NET SDK 6.0 or later
+- RimWorld assembly references (automatically provided via [RimRef NuGet package](https://www.nuget.org/packages/Krafs.Rimworld.Ref/))
+
+### Build Commands
 
 ```bash
-cd Source
-dotnet build -c Release
+just build    # Recommended
+# OR
+cd Source && dotnet build -c Release
 ```
 
-OR, more simply:
-```bash
-just build
-```
+**Output:** `Assemblies/RimWorldLinuxMisc.dll`
 
-Output: `Assemblies/RimWorldLinuxMisc.dll`
+**First build:** The build will automatically download RimRef assemblies from NuGet (~4MB download).
 
 ### Creating a Release
 

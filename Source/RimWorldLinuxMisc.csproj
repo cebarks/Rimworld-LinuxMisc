@@ -15,17 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="2.3.3" ExcludeAssets="runtime" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>$(HOME)/.steam/steam/steamapps/common/RimWorld/RimWorldLinux_Data/Managed/Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>$(HOME)/.steam/steam/steamapps/common/RimWorld/RimWorldLinux_Data/Managed/UnityEngine.CoreModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
+    <PackageReference Include="Krafs.Rimworld.Ref" Version="1.5.4061" ExcludeAssets="runtime" />
   </ItemGroup>
 
 </Project>
