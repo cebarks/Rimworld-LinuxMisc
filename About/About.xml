@@ -15,9 +15,6 @@ Source: https://github.com/cebarks/rimworld-linux-misc</description>
     <supportedVersions>
         <li>1.6</li>
     </supportedVersions>
-    <loadAfter>
-        <li>Ludeon.RimWorld</li>
-    </loadAfter>
     <loadBefore>
         <li>brrainz.harmony</li>
         <li>UnlimitedHugs.HugsLib</li>
