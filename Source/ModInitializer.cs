@@ -10,24 +10,27 @@ namespace RimWorldLinuxMisc
         {
             Log.Message("[LinuxMisc] Linux Performance Optimizations mod initializing...");
 
-            bool thpEnabled = THPManager.EnableTHP();
+            bool cpuAffinityEnabled = CPUOptimizer.EnableCPUAffinity();
+            bool memoryOptsEnabled = MemoryOptimizer.EnableTHP();
             bool gamemodeEnabled = GamemodeManager.EnableGamemode();
 
-            if (thpEnabled && gamemodeEnabled)
+            int enabledCount = (cpuAffinityEnabled ? 1 : 0) + (memoryOptsEnabled ? 1 : 0) + (gamemodeEnabled ? 1 : 0);
+
+            if (enabledCount == 3)
             {
-                Log.Message("[LinuxMisc] Initialization complete - THP and gamemode enabled successfully");
+                Log.Message("[LinuxMisc] Initialization complete - All optimizations enabled (CPU affinity, memory optimizations, gamemode)");
             }
-            else if (thpEnabled)
+            else if (enabledCount > 0)
             {
-                Log.Message("[LinuxMisc] Initialization complete - THP enabled, gamemode not available");
-            }
-            else if (gamemodeEnabled)
-            {
-                Log.Message("[LinuxMisc] Initialization complete - Gamemode enabled, THP not available");
+                var enabled = new System.Collections.Generic.List<string>();
+                if (cpuAffinityEnabled) enabled.Add("CPU affinity");
+                if (memoryOptsEnabled) enabled.Add("memory optimizations");
+                if (gamemodeEnabled) enabled.Add("gamemode");
+                Log.Message($"[LinuxMisc] Initialization complete - {string.Join(", ", enabled)} enabled");
             }
             else
             {
-                Log.Message("[LinuxMisc] Initialization complete - neither THP nor gamemode enabled");
+                Log.Message("[LinuxMisc] Initialization complete - no optimizations enabled");
             }
         }
     }
