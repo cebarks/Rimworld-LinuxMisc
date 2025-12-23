@@ -33,3 +33,38 @@ verify-thp:
 check-thp-status:
     @echo "System THP status:"
     @cat /sys/kernel/mm/transparent_hugepage/enabled
+
+# Create a release zip with versioned filename
+release: build
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    # Get version from git tags
+    VERSION=$(git describe --tags --always --dirty)
+    ZIP_NAME="LinuxMisc-${VERSION}.zip"
+    TEMP_DIR=$(mktemp -d)
+    MOD_DIR="${TEMP_DIR}/LinuxMisc"
+
+    echo "Creating release ${ZIP_NAME}..."
+
+    # Create directory structure
+    mkdir -p "${MOD_DIR}"
+
+    # Copy required directories
+    cp -r About "${MOD_DIR}/"
+    cp -r Assemblies "${MOD_DIR}/"
+    cp README.md "${MOD_DIR}/"
+
+    # Copy Source/ excluding build artifacts
+    rsync -a --exclude='bin/' --exclude='obj/' --exclude='*.user' --exclude='*.suo' \
+        Source/ "${MOD_DIR}/Source/"
+
+    # Create zip (remove old one if exists)
+    rm -f "${ZIP_NAME}"
+    (cd "${TEMP_DIR}" && zip -r -q "${ZIP_NAME}" LinuxMisc)
+    mv "${TEMP_DIR}/${ZIP_NAME}" .
+
+    # Cleanup
+    rm -rf "${TEMP_DIR}"
+
+    echo "✓ Created ${ZIP_NAME}"
