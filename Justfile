@@ -12,10 +12,12 @@ alias b := build
 build:
     cd Source && dotnet build -c Release
 
-# Clean build artifacts
+# Clean build artifacts and generated files
 clean:
     cd Source && dotnet clean
-    rm -f Assemblies/*.dll
+    rm -fv Assemblies/*.dll Assemblies/*.pdb
+    rm -fv LinuxMisc-*.zip
+    find Source -type f \( -name '*.user' -o -name '*.suo' \) -print -delete 2>/dev/null || true
 
 # Clean and rebuild
 rebuild: clean build
