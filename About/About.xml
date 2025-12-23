@@ -18,4 +18,8 @@ Source: https://github.com/cebarks/rimworld-linux-misc</description>
     <loadAfter>
         <li>Ludeon.RimWorld</li>
     </loadAfter>
+    <loadBefore>
+        <li>brrainz.harmony</li>
+        <li>UnlimitedHugs.HugsLib</li>
+    </loadBefore>
 </ModMetaData>
