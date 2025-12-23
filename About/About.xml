@@ -6,10 +6,13 @@
     <description>Performance optimizations for RimWorld on Linux.
 
 Features:
-• Transparent Huge Pages (THP) for improved memory performance
-• GameMode integration for CPU governor optimizations
+• CPU Affinity - Pin game to specific cores with hybrid CPU detection (P-cores vs E-cores)
+• Transparent Huge Pages (THP) - Use 2MB pages for improved memory performance
+• Memory Prefaulting - Pre-fault memory pages to reduce stuttering (kernel 5.14+)
+• File I/O Hints - Optimize file-backed memory for faster save/load operations
+• GameMode Integration - Activate Feral's gamemode performance optimizations
 
-Both features are enabled automatically on startup and can be configured in mod settings. Gracefully does nothing on Windows/macOS.
+All features are enabled automatically on startup and can be configured in mod settings. Gracefully does nothing on Windows/macOS.
 
 Source: https://github.com/cebarks/rimworld-linux-misc</description>
     <supportedVersions>
