@@ -35,3 +35,32 @@ jobs:
         with:
           files: LinuxMisc-*.zip
           generate_release_notes: true
+
+      # Extract mod files for Steam upload
+      - name: Extract mod files for Steam
+        run: |
+          VERSION=$(git describe --tags --always --dirty)
+          unzip "LinuxMisc-${VERSION}.zip" -d steam-upload
+          mv steam-upload/LinuxMisc steam-upload/mod
+
+      # Determine Workshop Item ID (0 for first upload, stored ID for updates)
+      - name: Determine Workshop Item ID
+        id: workshop_id
+        run: |
+          if [ -f "About/PublishedFileId.txt" ]; then
+            ITEM_ID=$(cat About/PublishedFileId.txt)
+          else
+            ITEM_ID="0"
+          fi
+          echo "item_id=${ITEM_ID}" >> $GITHUB_OUTPUT
+
+      # Upload to Steam Workshop
+      - name: Upload to Steam Workshop
+        uses: buildalon/upload-steam@v1
+        with:
+          username: ${{ secrets.STEAM_USERNAME }}
+          password: ${{ secrets.STEAM_PASSWORD }}
+          app_id: 294100
+          workshop_item_id: ${{ steps.workshop_id.outputs.item_id }}
+          content_root: steam-upload/mod
+          description: "RimWorld Linux Performance Optimizations - ${{ github.ref_name }}"
