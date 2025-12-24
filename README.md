@@ -20,7 +20,7 @@ This mod is available on the [Steam Workshop](https://steamcommunity.com/app/294
 
 **Workshop Item**: [Link will be added after first publish]
 
-Releases are automatically published to Steam Workshop when new versions are released.
+Releases are automatically published to Steam Workshop when new versions are released (requires manual 2FA approval via Steam Mobile app on first run).
 
 ### Manual Installation
 
@@ -60,6 +60,10 @@ Download the latest release from the [GitHub Releases](https://github.com/cebark
 ### **Verify THP is working (while game is running):**
 ```bash
 cat /proc/$(pgrep RimWorldLinux)/smaps | grep AnonHugePages | grep -v "0 kB"
+```
+Or if you want to see the total amount of allocated THP RAM:
+```bash
+cat /proc/$(pgrep RimWorldLinux)/smaps | grep "Size:" | awk '{sum += $2} END {print "Total huge pages: " sum " kB (" sum/1024 " MB)"}'
 ```
 If you see non-zero values, THP is working.
 
