@@ -87,7 +87,7 @@ Access settings via RimWorld's **Options → Mod Settings → Linux Performance 
 
 **Memory Optimization:**
 - **Enable Transparent Huge Pages**: Toggle on/off (default: enabled)
-- **Periodic Interval**: 0-300 seconds (default: 30) - re-apply optimizations periodically, 0 for startup-only
+- **Periodic Interval**: 0-300 seconds (default: 90) - re-apply optimizations periodically, 0 for startup-only
 - **Verbose periodic logging**: Toggle on/off (default: enabled) - log each periodic execution
 - **Enable memory prefaulting**: Toggle on/off (default: enabled) - requires kernel 5.14+
 - **Enable file I/O hints**: Toggle on/off (default: enabled)

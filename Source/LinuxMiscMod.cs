@@ -129,7 +129,7 @@ namespace RimWorldLinuxMisc
                 settings.preferPerformanceCores = true;
                 settings.applyCPUAffinityWithGamemode = false;
                 settings.enablePeriodicMadvise = true;
-                settings.periodicMadviseInterval = 30000;
+                settings.periodicMadviseInterval = 90000;
                 settings.verbosePeriodicLogging = true;
                 settings.enableMemoryPrefaulting = true;
                 settings.enableFileIOHints = true;

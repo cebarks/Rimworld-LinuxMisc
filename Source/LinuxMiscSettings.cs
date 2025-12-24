@@ -6,7 +6,7 @@ namespace RimWorldLinuxMisc
     {
         // THP settings
         public bool enablePeriodicMadvise = true;
-        public int periodicMadviseInterval = 30000;
+        public int periodicMadviseInterval = 90000;
         public bool verbosePeriodicLogging = true;
 
         // CPU Affinity settings
@@ -27,7 +27,7 @@ namespace RimWorldLinuxMisc
         public override void ExposeData()
         {
             Scribe_Values.Look(ref enablePeriodicMadvise, "enablePeriodicMadvise", true);
-            Scribe_Values.Look(ref periodicMadviseInterval, "periodicMadviseInterval", 30000);
+            Scribe_Values.Look(ref periodicMadviseInterval, "periodicMadviseInterval", 90000);
             Scribe_Values.Look(ref verbosePeriodicLogging, "verbosePeriodicLogging", true);
             Scribe_Values.Look(ref enableCPUAffinity, "enableCPUAffinity", true);
             Scribe_Values.Look(ref reservedCoresForOS, "reservedCoresForOS", 1);
