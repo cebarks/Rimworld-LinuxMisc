@@ -24,7 +24,7 @@ rebuild: clean build
 
 # Tail RimWorld log and filter for this mod's messages
 logs:
-    @tail -f ~/.config/unity3d/Ludeon\ Studios/RimWorld\ by\ Ludeon\ Studios/Logs/Player.log | rg LinuxMisc
+    @tail -f ~/.config/unity3d/Ludeon\ Studios/RimWorld\ by\ Ludeon\ Studios/Logs/Player.log | grep LinuxMisc
 
 # Check if THP is working for running RimWorld process
 verify-thp:
