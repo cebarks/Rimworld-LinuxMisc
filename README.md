@@ -28,7 +28,9 @@ Download the latest release from the [GitHub Releases](https://github.com/cebark
 
 ## Requirements
 
-**Platform**: Linux only. (The mod detects the platform at runtime and does nothing on Windows/macOS.)
+**Game version**: RimWorld 1.7 (Waylith) only. This mod has not been verified for RimWorld 1.6.
+
+**Platform**: Linux features only. (The mod detects the platform at runtime and skips Linux-specific optimizations on Windows/macOS.)
 
 **CPU Affinity**:
 - Works on all Linux systems
@@ -59,17 +61,17 @@ Download the latest release from the [GitHub Releases](https://github.com/cebark
 
 ### **Verify THP is working (while game is running):**
 ```bash
-cat /proc/$(pgrep RimWorldLinux)/smaps | grep AnonHugePages | grep -v "0 kB"
+cat /proc/$(pgrep -xo RimWorld)/smaps | grep AnonHugePages | grep -v "0 kB"
 ```
 Or if you want to see the total amount of allocated THP RAM:
 ```bash
-cat /proc/$(pgrep RimWorldLinux)/smaps | grep "Size:" | awk '{sum += $2} END {print "Total huge pages: " sum " kB (" sum/1024 " MB)"}'
+cat /proc/$(pgrep -xo RimWorld)/smaps | grep "Size:" | awk '{sum += $2} END {print "Total huge pages: " sum " kB (" sum/1024 " MB)"}'
 ```
 If you see non-zero values, THP is working.
 
 ### **Verify CPU affinity:**
 ```bash
-taskset -cp $(pgrep RimWorldLinux)
+taskset -cp $(pgrep -xo RimWorld)
 ```
 Shows which CPU cores the game is pinned to.
 
@@ -130,8 +132,8 @@ If you experience CPU scheduling issues (unexpected core usage, performance prob
 ## Building from Source
 
 ### Requirements
-- .NET SDK 6.0 or later
-- RimWorld assembly references (automatically provided via [RimRef NuGet package](https://www.nuget.org/packages/Krafs.Rimworld.Ref/))
+- .NET SDK 10.0 or later
+- RimWorld 1.7 assembly references (automatically provided via [RimRef NuGet package](https://www.nuget.org/packages/Krafs.Rimworld.Ref/))
 
 ### Build Commands
 
@@ -163,8 +165,8 @@ The zip file can be uploaded to GitHub releases or shared directly with users.
 
 ## Platform Support
 
-- **Linux**: Full support (requires kernel THP support, available in all modern kernels)
-- **Windows/macOS**: Gracefully does nothing (no errors, no crashes)
+- **RimWorld 1.7 on Linux**: Supported; Linux-specific optimizations require kernel THP support where applicable.
+- **RimWorld 1.7 on Windows/macOS**: The mod loads but skips Linux-specific optimizations.
 
 ## License
 

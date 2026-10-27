@@ -24,12 +24,12 @@ rebuild: clean build
 
 # Tail RimWorld log and filter for this mod's messages
 logs:
-    @tail -f ~/.config/unity3d/Ludeon\ Studios/RimWorld\ by\ Ludeon\ Studios/Player.log | grep LinuxMisc
+    @tail -f ~/.config/unity3d/Ludeon\ Studios/RimWorld\ by\ Ludeon\ Studios/Logs/Player.log | grep LinuxMisc
 
 # Check if THP is working for running RimWorld process
 verify-thp:
     @echo "Checking for Transparent Huge Pages in RimWorld process..."
-    @cat /proc/$(pgrep RimWorldLinux)/smaps | grep AnonHugePages | grep -v "0 kB" || echo "No huge pages found (RimWorld may not be running or THP not enabled)"
+    @cat /proc/$(pgrep -xo RimWorld)/smaps | grep AnonHugePages | grep -v "0 kB" || echo "No huge pages found (RimWorld may not be running or THP not enabled)"
 
 # Show system THP configuration
 check-thp-status:
