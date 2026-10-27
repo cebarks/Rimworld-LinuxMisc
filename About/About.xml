@@ -3,16 +3,11 @@
     <name>Linux Performance Optimizations</name>
     <author>Anten Skrabec</author>
     <packageId>cebarks.rimworld.linuxmisc</packageId>
-    <description>Performance optimizations for RimWorld on Linux.
+    <description>Best-effort Linux integration for RimWorld 1.7.
 
-Features:
-• CPU Affinity - Pin game to specific cores with hybrid CPU detection (P-cores vs E-cores)
-• Transparent Huge Pages (THP) - Use 2MB pages for improved memory performance
-• Memory Prefaulting - Pre-fault memory pages to reduce stuttering (kernel 5.14+)
-• File I/O Hints - Optimize file-backed memory for faster save/load operations
-• GameMode Integration - Activate Feral's gamemode performance optimizations
+Fresh defaults request startup Transparent Huge Pages and GameMode when available. CPU affinity reconciliation, periodic memory advice, bounded prefaulting, and file I/O hints are independent opt-in controls. Existing saved settings are preserved and may differ from fresh defaults.
 
-All features are enabled automatically on startup and can be configured in mod settings. Gracefully does nothing on Windows/macOS.
+The in-mod affinity policy applies to observed threads and is not a whole-game pinning guarantee; external launcher or cgroup policy is recommended for reliable placement. GameMode activation means the daemon accepted a request, not that its configuration pins CPUs. Native features skip safely when unsupported or unavailable. No specific performance gain is promised; benchmark a representative save.
 
 Source: https://github.com/cebarks/rimworld-linux-misc</description>
     <supportedVersions>

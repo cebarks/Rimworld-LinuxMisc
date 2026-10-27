@@ -21,17 +21,39 @@ namespace RimWorldLinuxMisc.NativeInterop
         private static extern int madvise(IntPtr addr, UIntPtr length, int advice);
 
         [DllImport("libc", SetLastError = true)]
-        private static extern int sched_setaffinity(int pid, UIntPtr cpusetsize, ref ulong mask);
+        private static extern int sched_setaffinity(int pid, UIntPtr cpusetsize, [In] byte[] mask);
 
         [DllImport("libc", SetLastError = true)]
-        private static extern int sched_getaffinity(int pid, UIntPtr cpusetsize, ref ulong mask);
+        private static extern int sched_getaffinity(int pid, UIntPtr cpusetsize, [Out] byte[] mask);
+
+        [DllImport("libc", SetLastError = true)]
+        private static extern int gettid();
 
         [DllImport("libc", SetLastError = true)]
         private static extern int uname(IntPtr buf);
 
+        private sealed class LibcAffinityNativeCalls : IAffinityNativeCalls
+        {
+            public int GetAffinity(int tid, byte[] destination, out int errno)
+            {
+                int result = sched_getaffinity(tid, new UIntPtr((uint)destination.Length), destination);
+                errno = result == 0 ? 0 : Marshal.GetLastWin32Error();
+                return result;
+            }
+
+            public int SetAffinity(int tid, byte[] mask, out int errno)
+            {
+                int result = sched_setaffinity(tid, new UIntPtr((uint)mask.Length), mask);
+                errno = result == 0 ? 0 : Marshal.GetLastWin32Error();
+                return result;
+            }
+        }
+
+        private static readonly IAffinityNativeCalls affinityNativeCalls = new LibcAffinityNativeCalls();
+
         public static bool IsLinux()
         {
-            return Environment.OSVersion.Platform == PlatformID.Unix;
+            return OperatingSystem.IsLinux();
         }
 
         public static bool TryEnableTHPViaPrctl()
@@ -70,7 +92,7 @@ namespace RimWorldLinuxMisc.NativeInterop
             return Marshal.GetLastWin32Error();
         }
 
-        public static bool TrySetCPUAffinity(ulong affinityMask, out int errno)
+        public static bool TrySetCPUAffinity(int tid, byte[] affinityMask, out int errno)
         {
             if (!IsLinux())
             {
@@ -78,22 +100,26 @@ namespace RimWorldLinuxMisc.NativeInterop
                 return false;
             }
 
-            int result = sched_setaffinity(0, new UIntPtr(8), ref affinityMask);
-            errno = Marshal.GetLastWin32Error();
-            return result == 0;
+            return AffinitySyscalls.TrySetAffinity(affinityNativeCalls, tid, affinityMask, out errno);
         }
 
-        public static bool TryGetCPUAffinity(out ulong affinityMask, out int errno)
+        public static bool TryGetCPUAffinity(int tid, out byte[] affinityMask, out int errno)
         {
-            affinityMask = 0;
+            affinityMask = Array.Empty<byte>();
             errno = 0;
 
             if (!IsLinux())
                 return false;
 
-            int result = sched_getaffinity(0, new UIntPtr(8), ref affinityMask);
-            errno = Marshal.GetLastWin32Error();
-            return result == 0;
+            return AffinitySyscalls.TryGetAffinity(affinityNativeCalls, tid, out affinityMask, out errno);
+        }
+
+        public static int GetCurrentThreadId()
+        {
+            if (!IsLinux())
+                return 0;
+
+            return gettid();
         }
 
         public static bool TryGetKernelVersion(out int major, out int minor, out int errno)

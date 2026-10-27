@@ -11,23 +11,29 @@ permissions:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history for git describe
+          fetch-depth: 0
 
-      - name: Setup .NET
+      - name: Set up .NET 10
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: 10.0.x
+
+      - name: Install native build and archive tools
+        run: sudo apt-get update && sudo apt-get install -y build-essential binutils zip
 
       - name: Install just
         uses: extractions/setup-just@v3
 
-      - name: Build release
+      - name: Run regression suites
+        run: just test
+
+      - name: Build release archive
         run: just release
 
       - name: Create GitHub Release
@@ -36,14 +42,12 @@ jobs:
           files: LinuxMisc-*.zip
           generate_release_notes: true
 
-      # Extract mod files for Steam upload
       - name: Extract mod files for Steam
         run: |
           VERSION=$(git describe --tags --always --dirty)
           unzip "LinuxMisc-${VERSION}.zip" -d steam-upload
           mv steam-upload/LinuxMisc steam-upload/mod
 
-      # Determine Workshop Item ID (0 for first upload, stored ID for updates)
       - name: Determine Workshop Item ID
         id: workshop_id
         run: |
@@ -52,9 +56,8 @@ jobs:
           else
             ITEM_ID="0"
           fi
-          echo "item_id=${ITEM_ID}" >> $GITHUB_OUTPUT
+          echo "item_id=${ITEM_ID}" >> "$GITHUB_OUTPUT"
 
-      # Upload to Steam Workshop
       - name: Upload to Steam Workshop
         uses: buildalon/upload-steam@v1
         with:

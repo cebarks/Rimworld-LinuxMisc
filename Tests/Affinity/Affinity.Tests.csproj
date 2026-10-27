@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);CS8600</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../../Source/NativeInterop/AffinityMask.cs" Link="Production/AffinityMask.cs" />
+    <Compile Include="../../Source/NativeInterop/AffinityPolicy.cs" Link="Production/AffinityPolicy.cs" />
+    <Compile Include="../../Source/NativeInterop/AffinityController.cs" Link="Production/AffinityController.cs" />
+    <Compile Include="../../Source/NativeInterop/AffinityReconciler.cs" Link="Production/AffinityReconciler.cs" />
+    <Compile Include="../../Source/NativeInterop/AffinitySyscalls.cs" Link="Production/AffinitySyscalls.cs" />
+    <Compile Include="../../Source/NativeInterop/LinuxAffinityPlatform.cs" Link="Production/LinuxAffinityPlatform.cs" />
+    <Compile Include="../../Source/NativeInterop/LinuxSyscalls.cs" Link="Production/LinuxSyscalls.cs" />
+  </ItemGroup>
+</Project>

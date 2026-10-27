@@ -8,29 +8,25 @@ namespace RimWorldLinuxMisc
     {
         static ModInitializer()
         {
-            Log.Message("[LinuxMisc] Linux Performance Optimizations mod initializing...");
+            Log.Message("[LinuxMisc] Linux optimization controls initializing (settings changes require restart)...");
 
-            bool cpuAffinityEnabled = CPUOptimizer.EnableCPUAffinity();
-            bool memoryOptsEnabled = MemoryOptimizer.EnableTHP();
-            bool gamemodeEnabled = GamemodeManager.EnableGamemode();
+            OptimizationStartupResult result = OptimizationStartup.Initialize(
+                GamemodeManager.EnableGamemode,
+                CPUOptimizer.EnableCPUAffinity,
+                MemoryOptimizer.EnableTHP);
 
-            int enabledCount = (cpuAffinityEnabled ? 1 : 0) + (memoryOptsEnabled ? 1 : 0) + (gamemodeEnabled ? 1 : 0);
+            var enabled = new System.Collections.Generic.List<string>();
+            if (result.GamemodeEnabled) enabled.Add("GameMode active");
+            if (result.CpuAffinityEnabled) enabled.Add("best-effort CPU affinity active");
+            if (result.MemoryEnabled) enabled.Add("memory advice active or scheduled");
 
-            if (enabledCount == 3)
+            if (enabled.Count == 0)
             {
-                Log.Message("[LinuxMisc] Initialization complete - All optimizations enabled (CPU affinity, memory optimizations, gamemode)");
-            }
-            else if (enabledCount > 0)
-            {
-                var enabled = new System.Collections.Generic.List<string>();
-                if (cpuAffinityEnabled) enabled.Add("CPU affinity");
-                if (memoryOptsEnabled) enabled.Add("memory optimizations");
-                if (gamemodeEnabled) enabled.Add("gamemode");
-                Log.Message($"[LinuxMisc] Initialization complete - {string.Join(", ", enabled)} enabled");
+                Log.Message("[LinuxMisc] Initialization complete - no optional optimization was activated");
             }
             else
             {
-                Log.Message("[LinuxMisc] Initialization complete - no optimizations enabled");
+                Log.Message($"[LinuxMisc] Initialization complete - {string.Join(", ", enabled)}");
             }
         }
     }
