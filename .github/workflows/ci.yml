@@ -1,0 +1,37 @@
+name: Build and test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-x64:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install native build tools
+        run: sudo apt-get update && sudo apt-get install -y build-essential binutils zip
+
+      - name: Install just
+        uses: extractions/setup-just@v3
+
+      - name: Test
+        run: just test
+
+      - name: Build and verify release archive
+        run: just release
+
+      - name: Verify packaged shim has no hard GameMode dependency
+        run: |
+          test -f Assemblies/liblinuxmisc_gamemode.so
+          ! readelf -d Assemblies/liblinuxmisc_gamemode.so | grep -q 'Shared library: \[libgamemode'

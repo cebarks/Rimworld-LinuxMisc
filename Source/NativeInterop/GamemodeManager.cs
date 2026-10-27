@@ -3,54 +3,113 @@ using Verse;
 
 namespace RimWorldLinuxMisc.NativeInterop
 {
+    internal sealed class GamemodeSession
+    {
+        private readonly object sync = new object();
+        private readonly IGamemodeClient client;
+        private bool isActive;
+
+        internal GamemodeSession(IGamemodeClient client)
+        {
+            this.client = client ?? throw new ArgumentNullException(nameof(client));
+        }
+
+        internal bool IsActive
+        {
+            get
+            {
+                lock (sync)
+                {
+                    return isActive;
+                }
+            }
+        }
+
+        internal bool TryActivate(out string error)
+        {
+            lock (sync)
+            {
+                if (isActive)
+                {
+                    error = null;
+                    return true;
+                }
+
+                if (!client.TryRequestStart(out error))
+                {
+                    return false;
+                }
+
+                isActive = true;
+                return true;
+            }
+        }
+
+        internal bool TryDeactivate(out string error)
+        {
+            lock (sync)
+            {
+                if (!isActive)
+                {
+                    error = null;
+                    return true;
+                }
+
+                if (!client.TryRequestEnd(out error))
+                {
+                    return false;
+                }
+
+                isActive = false;
+                return true;
+            }
+        }
+    }
+
     internal static class GamemodeManager
     {
-        private static bool isActive = false;
-        private static bool cleanupRegistered = false;
+        private static readonly object CleanupSync = new object();
+        private static readonly GamemodeSession Session = new GamemodeSession(new NativeGamemodeClient());
+        private static bool cleanupRegistered;
 
         public static bool EnableGamemode()
         {
             try
             {
-                if (!LinuxSyscalls.IsLinux())
+                if (!GamemodeInterop.IsSupportedPlatform(out string unsupportedReason))
                 {
-                    Log.Message("[LinuxMisc] Not running on Linux, skipping gamemode activation");
+                    Log.Message($"[LinuxMisc] {unsupportedReason}; skipping GameMode activation");
                     return false;
                 }
 
-                var settings = LinuxMiscMod.GetSettings();
+                LinuxMiscSettings settings = LinuxMiscMod.GetSettings();
                 if (!settings.enableGamemode)
                 {
-                    Log.Message("[LinuxMisc] Gamemode disabled in settings, skipping activation");
+                    Log.Message("[LinuxMisc] GameMode disabled in settings; skipping activation");
                     return false;
                 }
 
-                if (!GamemodeInterop.IsLibraryAvailable())
+                bool wasActive = Session.IsActive;
+                if (!Session.TryActivate(out string error))
                 {
-                    Log.Message("[LinuxMisc] libgamemode not found, skipping gamemode activation");
+                    Log.Warning($"[LinuxMisc] GameMode activation was not accepted: {error}");
                     return false;
                 }
 
-                if (isActive)
+                RegisterCleanupHandler();
+                if (wasActive)
                 {
-                    Log.Message("[LinuxMisc] Gamemode already active, skipping duplicate activation");
-                    return true;
+                    Log.Message("[LinuxMisc] GameMode already active; duplicate activation skipped");
                 }
-
-                if (GamemodeInterop.TryRequestStart(out string error))
+                else
                 {
-                    isActive = true;
-                    RegisterCleanupHandler();
-                    Log.Message("[LinuxMisc] Successfully activated gamemode");
-                    return true;
+                    Log.Message("[LinuxMisc] GameMode request activated for this client");
                 }
-
-                Log.Warning($"[LinuxMisc] Failed to activate gamemode: {error}");
-                return false;
+                return true;
             }
             catch (Exception ex)
             {
-                Log.Error($"[LinuxMisc] Exception while enabling gamemode: {ex}");
+                Log.Error($"[LinuxMisc] Exception while enabling GameMode: {ex}");
                 return false;
             }
         }
@@ -59,43 +118,44 @@ namespace RimWorldLinuxMisc.NativeInterop
         {
             try
             {
-                if (!isActive)
+                if (!Session.IsActive)
                 {
                     return;
                 }
 
-                if (GamemodeInterop.TryRequestEnd(out string error))
+                if (Session.TryDeactivate(out string error))
                 {
-                    Log.Message("[LinuxMisc] Successfully deactivated gamemode on shutdown");
+                    Log.Message("[LinuxMisc] GameMode request ended on shutdown");
                 }
                 else
                 {
-                    Log.Warning($"[LinuxMisc] Failed to deactivate gamemode: {error}");
+                    Log.Warning($"[LinuxMisc] Failed to end GameMode request: {error}");
                 }
-
-                isActive = false;
             }
             catch (Exception ex)
             {
-                Log.Warning($"[LinuxMisc] Exception while disabling gamemode: {ex.Message}");
+                Log.Warning($"[LinuxMisc] Exception while ending GameMode request: {ex.Message}");
             }
         }
 
         private static void RegisterCleanupHandler()
         {
-            if (cleanupRegistered)
+            lock (CleanupSync)
             {
-                return;
-            }
+                if (cleanupRegistered)
+                {
+                    return;
+                }
 
-            try
-            {
-                AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
-                cleanupRegistered = true;
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"[LinuxMisc] Failed to register gamemode cleanup handler: {ex.Message}");
+                try
+                {
+                    AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
+                    cleanupRegistered = true;
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning($"[LinuxMisc] Failed to register GameMode cleanup handler: {ex.Message}");
+                }
             }
         }
 

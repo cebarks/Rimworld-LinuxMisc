@@ -12,10 +12,28 @@
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <GenerateDependencyFile>false</GenerateDependencyFile>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <NativeProjectDirectory>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../Native'))</NativeProjectDirectory>
+    <NativeShimBuildPath>$(NativeProjectDirectory)/build/liblinuxmisc_gamemode.so</NativeShimBuildPath>
+    <NativeShimOutputPath>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../Assemblies/liblinuxmisc_gamemode.so'))</NativeShimOutputPath>
+    <NativeMake Condition="'$(NativeMake)' == ''">make</NativeMake>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Krafs.Rimworld.Ref" Version="1.7.4985-unstable" ExcludeAssets="runtime" />
   </ItemGroup>
+
+  <Target Name="BuildGameModeShim"
+          BeforeTargets="BeforeBuild"
+          Condition="$([MSBuild]::IsOSPlatform('Linux')) and '$(NETCoreSdkRuntimeIdentifier)' == 'linux-x64'">
+    <Exec Command="&quot;$(NativeMake)&quot; -C &quot;$(NativeProjectDirectory)&quot; all" />
+    <Copy SourceFiles="$(NativeShimBuildPath)" DestinationFiles="$(NativeShimOutputPath)" />
+  </Target>
+
+  <Target Name="CleanGameModeShim" AfterTargets="Clean">
+    <Delete Files="$(NativeShimOutputPath)" />
+    <Exec Command="&quot;$(NativeMake)&quot; -C &quot;$(NativeProjectDirectory)&quot; clean"
+          Condition="$([MSBuild]::IsOSPlatform('Linux'))" />
+  </Target>
 
 </Project>

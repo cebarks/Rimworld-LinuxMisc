@@ -1,173 +1,158 @@
 # RimWorld Linux Misc
 
-Performance optimizations for RimWorld on Linux.
+Best-effort Linux integration for RimWorld 1.7. The mod can request Transparent
+Huge Pages (THP), apply optional memory advice, reconcile per-thread CPU
+affinity, and activate Feral Interactive's GameMode client. These controls are
+not a promise of a particular TPS improvement; measure them on your own save
+and system.
 
-## What It Does
+## Support and safety boundaries
 
-Five Linux-specific performance optimizations:
+- **Game version:** RimWorld 1.7 only.
+- **Native package:** Linux x86-64. Other operating systems and architectures
+  load the managed mod but skip unsupported native features.
+- Settings are sampled during startup and changes require a game restart.
+- Requests and advice can succeed without producing a measurable performance
+  improvement.
+- The mod does not change global THP policy, sysctls, caches, or cgroups.
 
-1. **CPU Affinity**: Pins the game to specific CPU cores to improve cache locality and reduce context switches. Automatically detects hybrid CPUs (Intel 12th gen+) and prefers performance cores over efficiency cores.
-2. **Transparent Huge Pages (THP)**: Uses 2MB memory pages instead of standard 4KB pages, reducing Translation Lookaside Buffer (TLB) misses for better memory performance.
-3. **Memory Prefaulting**: Pre-faults memory pages to reduce runtime stuttering from page faults. Requires Linux kernel 5.14+.
-4. **File I/O Hints**: Applies kernel hints (`MADV_SEQUENTIAL`, `MADV_WILLNEED`) to file-backed memory for faster save/load operations.
-5. **GameMode Integration**: Activates Feral Interactive's gamemode for system-wide performance optimizations.
+For reliable whole-process CPU placement, prefer an external launcher,
+`taskset`, or a systemd/cgroup policy. The in-mod affinity option is a
+best-effort policy over the thread IDs it can observe. It reconciles newly
+observed threads every 30 seconds, preserves narrower existing thread masks,
+and cannot guarantee that every current or future game thread is pinned.
+
+## Fresh-install defaults
+
+| Control | Fresh default | Meaning |
+| --- | --- | --- |
+| CPU affinity | Off | Optional best-effort per-thread affinity reconciliation |
+| Startup THP advice | On | One startup pass requests THP for eligible mappings |
+| Periodic memory advice | Off | No background memory scan timer |
+| Memory prefaulting | Off | No page-population requests |
+| File I/O hints | Off | No advice for eligible file-backed mappings |
+| GameMode integration | On | Request activation when the packaged shim and a system GameMode host are available |
+
+Existing saved settings are preserved and can differ from these fresh defaults.
+In particular, a previously disabled THP setting remains disabled after the
+settings migration. Prefaulting is bounded by default (64 MiB attempted per
+pass); unbounded prefaulting requires a separate explicit opt-in. The budget
+counts attempted bytes, including failed advice, and is not a wall-time or
+physical-memory guarantee.
+
+## GameMode integration
+
+The release includes `Assemblies/liblinuxmisc_gamemode.so`, a small C wrapper
+around Feral Interactive's supported `gamemode_client.h`. The wrapper loads the
+system GameMode client dynamically, so the mod has **no hard
+`libgamemode.so` dependency**. Missing required shim/host functionality or a
+failed daemon request is reported and skipped without preventing RimWorld
+startup. Older hosts without the optional status query can still activate and
+deactivate GameMode; an explicit status query fails safely when unsupported.
+
+Install GameMode from your distribution if you want this feature:
+
+```text
+Fedora/RHEL:   sudo dnf install gamemode
+Ubuntu/Debian: sudo apt install gamemode
+Arch Linux:   sudo pacman -S gamemode
+```
+
+A successful GameMode activation means the daemon accepted this client's
+request. It does not prove that GameMode pinned CPUs; that depends on the
+system's GameMode configuration. By default the mod conservatively defers its
+optional affinity policy after successful GameMode activation unless the user
+explicitly enables coexistence.
+
+The shim is resolved beside `RimWorldLinuxMisc.dll`, not from RimWorld's current
+working directory. Linux architectures other than x86-64 skip GameMode until a
+matching native artifact is provided.
+
+## Feature notes
+
+### CPU affinity
+
+The opt-in policy works with actual allowed CPU IDs and per-thread masks. The
+"reserved cores" value excludes logical CPUs from the mod's candidate set; it
+does not reserve physical cores for the operating system. Hybrid-core
+preference uses trustworthy topology information when available and falls back
+conservatively rather than inferring P/E cores from frequency alone.
+
+Use this to inspect a process-level summary, while remembering individual
+threads may intentionally have narrower masks:
+
+```bash
+taskset -cp "$(pgrep -xo RimWorld)"
+```
+
+### Transparent Huge Pages
+
+THP advice only asks the kernel to consider eligible anonymous mappings. Actual
+huge-page backing depends on kernel policy, mapping eligibility, allocation,
+and memory pressure.
+
+Sum the amount currently reported for the process:
+
+```bash
+pid=$(pgrep -xo RimWorld)
+awk '/^AnonHugePages:/ { sum += $2 } END { printf "AnonHugePages: %d kB (%.1f MiB)\n", sum, sum / 1024 }' "/proc/$pid/smaps"
+```
+
+This must sum `AnonHugePages`, not mapping `Size`.
+
+### Periodic advice, prefaulting, and file hints
+
+These are independent opt-ins. Leaving all of them disabled creates no periodic
+memory timer and performs no corresponding native advice calls. Prefaulting can
+increase startup work and memory pressure; begin with the bounded mode and
+benchmark a representative save. File hints and successful `madvise` returns
+are requests accepted by the kernel, not proof of faster loading.
 
 ## Installation
 
-### Steam Workshop
+Extract a release into RimWorld's `Mods/` directory. A complete Linux x86-64
+installation contains at least:
 
-This mod is available on the [Steam Workshop](https://steamcommunity.com/app/294100/workshop/).
-
-**Workshop Item**: [Link will be added after first publish]
-
-Releases are automatically published to Steam Workshop when new versions are released (requires manual 2FA approval via Steam Mobile app on first run).
-
-### Manual Installation
-
-Download the latest release from the [GitHub Releases](https://github.com/cebarks/rimworld-linux-misc/releases) page and extract to your RimWorld `Mods/` directory.
-
-## Requirements
-
-**Game version**: RimWorld 1.7 (Waylith) only. This mod has not been verified for RimWorld 1.6.
-
-**Platform**: Linux features only. (The mod detects the platform at runtime and skips Linux-specific optimizations on Windows/macOS.)
-
-**CPU Affinity**:
-- Works on all Linux systems
-- Automatically detects CPU topology (hybrid vs non-hybrid)
-- No installation required
-
-**Transparent Huge Pages (THP)**:
-- Linux kernel with `CONFIG_TRANSPARENT_HUGEPAGE` enabled (standard on all modern distributions)
-
-**Memory Prefaulting**:
-- Linux kernel 5.14+ required
-- Feature is automatically skipped on older kernels
-
-**File I/O Hints**:
-- Works on all Linux kernels
-- No installation required
-
-**GameMode**: [Feral Interactive's GameMode](https://github.com/FeralInteractive/gamemode)
-- Install the `gamemode` package from your distribution's repositories
-  - Fedora/RHEL: `sudo dnf install gamemode`
-  - Ubuntu/Debian: `sudo apt install gamemode`
-  - Arch: `sudo pacman -S gamemode`
-- **Optional**: Can be disabled in mod settings if not installed
-
-
-
-## Verification
-
-### **Verify THP is working (while game is running):**
-```bash
-cat /proc/$(pgrep -xo RimWorld)/smaps | grep AnonHugePages | grep -v "0 kB"
-```
-Or if you want to see the total amount of allocated THP RAM:
-```bash
-cat /proc/$(pgrep -xo RimWorld)/smaps | grep "Size:" | awk '{sum += $2} END {print "Total huge pages: " sum " kB (" sum/1024 " MB)"}'
-```
-If you see non-zero values, THP is working.
-
-### **Verify CPU affinity:**
-```bash
-taskset -cp $(pgrep -xo RimWorld)
-```
-Shows which CPU cores the game is pinned to.
-
-**Note:** Memory prefaulting and file I/O hints log their status at startup but don't have simple verification commands. Check the log output.
-
-## Configuration
-
-Access settings via RimWorld's **Options → Mod Settings → Linux Performance Optimizations**:
-
-**CPU Affinity:**
-- **Enable CPU affinity optimization**: Toggle on/off (default: enabled)
-- **Reserved cores for OS**: 0-4 cores (default: 1) - cores to leave for system processes
-- **Prefer performance cores (hybrid CPUs)**: Toggle on/off (default: enabled) - pin to P-cores on Intel 12th gen+ CPUs
-- **Apply CPU affinity with gamemode (Advanced)**: Override gamemode's CPU management (default: disabled) - may conflict
-
-**Memory Optimization:**
-- **Enable Transparent Huge Pages**: Toggle on/off (default: enabled)
-- **Periodic Interval**: 0-300 seconds (default: 90) - re-apply optimizations periodically, 0 for startup-only
-- **Verbose periodic logging**: Toggle on/off (default: enabled) - log each periodic execution
-- **Enable memory prefaulting**: Toggle on/off (default: enabled) - requires kernel 5.14+
-- **Enable file I/O hints**: Toggle on/off (default: enabled)
-
-**GameMode:**
-- **Enable gamemode integration**: Toggle on/off (default: enabled) - requires `gamemode` package installed
-
-## Feature Interactions
-
-### CPU Affinity & GameMode Overlap
-
-Both **CPU Affinity** and **GameMode** can manage CPU scheduling, which may cause conflicts if both are active:
-
-**What GameMode Does:**
-- Depending on gamemode config it:
-  - sets CPU governor to "performance" mode
-  - May apply its own CPU affinity policies
-  - Adjusts process priority and I/O scheduling
-  - Enables GPU performance modes
-
-**What This Mod's CPU Affinity Does:**
-- Directly pins RimWorld to specific CPU cores using `sched_setaffinity()`
-- Prefers performance cores on hybrid CPUs (Intel 12th gen+)
-- Reserves cores for OS background tasks (rimworld is mostly single threaded, so reserving cores for OS/background tasks is negligible)
-
-**Default Behavior (Safe):**
-When both features are enabled, **CPU affinity automatically defers to gamemode** to prevent conflicts. The mod logs: `"Skipping CPU affinity - gamemode will handle CPU management"`.
-
-**Recommendations:**
-
-Choose the approach that fits your use case:
-
-- **GameMode alone (recommended for most users)**: System-wide optimizations that work across all games. Good general-purpose performance boost.
-
-- **Both (advanced)**: Enable the "Apply CPU affinity with gamemode" setting to force both features active. This may work if your gamemode configuration doesn't conflict, but can cause both features to fight over CPU scheduling. Only use if you understand the tradeoffs. This mod's settings should always take prescendence over gamemode's.
-
-**Troubleshooting:**
-If you experience CPU scheduling issues (unexpected core usage, performance problems), try disabling one of these features and restarting RimWorld.
-
-## Building from Source
-
-### Requirements
-- .NET SDK 10.0 or later
-- RimWorld 1.7 assembly references (automatically provided via [RimRef NuGet package](https://www.nuget.org/packages/Krafs.Rimworld.Ref/))
-
-### Build Commands
-
-```bash
-just build    # Recommended
-# OR
-cd Source && dotnet build -c Release
+```text
+LinuxMisc/About/About.xml
+LinuxMisc/Assemblies/RimWorldLinuxMisc.dll
+LinuxMisc/Assemblies/liblinuxmisc_gamemode.so
 ```
 
-**Output:** `Assemblies/RimWorldLinuxMisc.dll`
+The managed mod can still build and load on non-Linux development systems; the
+native GameMode artifact is produced only on a supported Linux x86-64 build
+host.
 
-**First build:** The build will automatically download RimRef assemblies from NuGet (~4MB download).
+## Building and testing
 
-### Creating a Release
+Requirements:
 
-To create a distributable release zip:
+- .NET SDK 10
+- `make` and a C11 compiler for the Linux x86-64 shim
+- `just`
+- `binutils`, `zip`, and Python 3 for release verification/packaging and integration tests
 
 ```bash
-just release
+just build       # Managed build; also builds/copies the shim on Linux x86-64
+just test        # Native fake hosts plus managed and optimization harnesses
+just clean
+just release     # Verified source-complete release archive
+
+# Direct managed build (same Linux x86-64 native target is invoked by MSBuild)
+dotnet build Source/RimWorldLinuxMisc.csproj -c Release
 ```
 
-This will:
-1. Build the mod in Release configuration
-2. Get the version from git tags (`git describe --tags`) or use the most recent commit hash as a version instead.
-3. Create a versioned zip file: `LinuxMisc-{VERSION}.zip`
-4. Include: `About/`, `Assemblies/`, `README.md`, and `Source/` (excluding build artifacts)
+Native tests use controlled fake `libgamemode` hosts and never send requests to
+a locally installed GameMode daemon. Release archives contain the mod DLL,
+packaged shim, wrapper source and ABI header, the exact vendored upstream
+header, provenance, and both project/upstream licenses. Test binaries and
+`bin`/`obj` directories are excluded.
 
-The zip file can be uploaded to GitHub releases or shared directly with users.
-
-## Platform Support
-
-- **RimWorld 1.7 on Linux**: Supported; Linux-specific optimizations require kernel THP support where applicable.
-- **RimWorld 1.7 on Windows/macOS**: The mod loads but skips Linux-specific optimizations.
+See [docs/benchmarking.md](docs/benchmarking.md) for a repeatable comparison
+protocol.
 
 ## License
 
-AGPL-3.0 - See [LICENSE](LICENSE) for details.
+The mod is AGPL-3.0; see [LICENSE](LICENSE). The vendored Feral GameMode client
+header retains its BSD 3-Clause license at
+`Native/vendor/gamemode/LICENSE.txt`.
