@@ -154,11 +154,30 @@ protocol.
 ## Publishing releases
 
 Pushing a `v*` tag runs tests, builds and publishes the GitHub ZIP, then uploads
-the extracted mod to Steam Workshop. Configure `STEAM_USERNAME`,
-`STEAM_PASSWORD`, and `STEAM_SHARED_SECRET` as GitHub Actions secrets before
-publishing. The configured Steam action generates a Steam Guard code from the
-shared secret; it does **not** wait for a mobile login approval. Never commit
-these credentials or paste them into issues or release notes.
+the extracted mod to Steam Workshop. Configure `STEAM_USERNAME` and
+`STEAM_CONFIG` as GitHub Actions secrets before publishing. The latter holds a
+Base64-encoded SteamCMD login configuration; no password or authenticator seed
+is passed to the upload action.
+
+Create the session interactively on your own machine: run `steamcmd`, enter
+`login YOUR_STEAM_USERNAME`, complete the password and Steam Guard prompts,
+then enter `quit`. Find the `config/config.vdf` written by that SteamCMD
+installation. Use its configuration rather than copying your entire desktop
+Steam configuration directory. Upload the file directly, without printing its
+contents:
+
+```bash
+# Set this to the config.vdf produced by your SteamCMD login.
+config_path=/path/to/steamcmd/config/config.vdf
+test -s "$config_path" && base64 < "$config_path" | gh secret set STEAM_CONFIG --repo cebarks/Rimworld-LinuxMisc
+```
+
+The session configuration is a sensitive login credential even though it is
+not your authenticator seed. Never commit it, attach it to issues, paste it in
+chat, or print it in CI logs. The workflow artifact contains only Workshop
+metadata, not the login configuration. If the session expires or an account
+security change invalidates it, repeat the local login and replace the secret.
+CI does not pause for interactive Steam Guard approval.
 
 The Workshop manifest uses the staged `About.xml` title/description and
 `About/Preview.png`, with public visibility. When `About/PublishedFileId.txt`

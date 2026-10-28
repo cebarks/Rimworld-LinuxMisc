@@ -57,8 +57,7 @@ jobs:
         uses: buildalon/upload-steam@v1
         with:
           username: ${{ secrets.STEAM_USERNAME }}
-          password: ${{ secrets.STEAM_PASSWORD }}
-          shared_secret: ${{ secrets.STEAM_SHARED_SECRET }}
+          config: ${{ secrets.STEAM_CONFIG }}
           workshop_item: steam-upload/workshop_item.vdf
 
       - name: Preserve Workshop upload result

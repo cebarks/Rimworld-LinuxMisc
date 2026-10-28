@@ -26,7 +26,9 @@ class WorkshopReleaseTests(unittest.TestCase):
 
     def test_workflow_auth_and_manifest_are_explicit(self):
         workflow = (ROOT / ".github/workflows/release.yml").read_text()
-        self.assertIn("shared_secret: ${{ secrets.STEAM_SHARED_SECRET }}", workflow)
+        self.assertIn("config: ${{ secrets.STEAM_CONFIG }}", workflow)
+        self.assertNotIn("password:", workflow)
+        self.assertNotIn("shared_secret:", workflow)
         self.assertIn("workshop_item: steam-upload/workshop_item.vdf", workflow)
         self.assertIn("python3 scripts/prepare_workshop.py", workflow)
         self.assertIn("actions/upload-artifact@v4", workflow)
