@@ -48,22 +48,23 @@ jobs:
           unzip "LinuxMisc-${VERSION}.zip" -d steam-upload
           mv steam-upload/LinuxMisc steam-upload/mod
 
-      - name: Determine Workshop Item ID
-        id: workshop_id
-        run: |
-          if [ -f "About/PublishedFileId.txt" ]; then
-            ITEM_ID=$(cat About/PublishedFileId.txt)
-          else
-            ITEM_ID="0"
-          fi
-          echo "item_id=${ITEM_ID}" >> "$GITHUB_OUTPUT"
+      - name: Prepare Workshop manifest
+        id: workshop_manifest
+        run: python3 scripts/prepare_workshop.py steam-upload/mod steam-upload/workshop_item.vdf
 
       - name: Upload to Steam Workshop
+        timeout-minutes: 20
         uses: buildalon/upload-steam@v1
         with:
           username: ${{ secrets.STEAM_USERNAME }}
           password: ${{ secrets.STEAM_PASSWORD }}
-          app_id: 294100
-          workshop_item_id: ${{ steps.workshop_id.outputs.item_id }}
-          content_root: steam-upload/mod
-          description: "RimWorld Linux Performance Optimizations - ${{ github.ref_name }}"
+          shared_secret: ${{ secrets.STEAM_SHARED_SECRET }}
+          workshop_item: steam-upload/workshop_item.vdf
+
+      - name: Preserve Workshop upload result
+        if: ${{ always() && steps.workshop_manifest.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: workshop-manifest-${{ github.ref_name }}-${{ github.run_attempt }}
+          path: steam-upload/workshop_item.vdf
+          if-no-files-found: error
