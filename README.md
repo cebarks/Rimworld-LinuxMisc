@@ -151,6 +151,28 @@ header, provenance, and both project/upstream licenses. Test binaries and
 See [docs/benchmarking.md](docs/benchmarking.md) for a repeatable comparison
 protocol.
 
+## Publishing releases
+
+Pushing a `v*` tag runs tests, builds and publishes the GitHub ZIP, then uploads
+the extracted mod to Steam Workshop. Configure `STEAM_USERNAME`,
+`STEAM_PASSWORD`, and `STEAM_SHARED_SECRET` as GitHub Actions secrets before
+publishing. The configured Steam action generates a Steam Guard code from the
+shared secret; it does **not** wait for a mobile login approval. Never commit
+these credentials or paste them into issues or release notes.
+
+The Workshop manifest uses the staged `About.xml` title/description and
+`About/Preview.png`, with public visibility. When `About/PublishedFileId.txt`
+is absent, the upload intentionally creates a **new** Workshop item. Once it
+succeeds, retrieve the generated numeric `publishedfileid` from the workflow's
+`workshop-manifest-*` artifact and commit it as `About/PublishedFileId.txt`
+before another release. Otherwise another upload would create a duplicate.
+A malformed or zero saved ID is rejected rather than silently creating one.
+
+The manifest artifact is preserved even after upload failure. Inspect its ID
+and the Steam logs before retrying: a failed run can still have created an
+item. GitHub release publication happens before the Steam step, so verify both
+results separately.
+
 ## License
 
 The mod is AGPL-3.0; see [LICENSE](LICENSE). The vendored Feral GameMode client
